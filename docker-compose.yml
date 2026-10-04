@@ -1,0 +1,30 @@
+services:
+  backend:
+    build: ./backend
+    container_name: venue-backend
+    environment:
+      # SQLite 数据库文件路径（挂载到命名卷持久化）
+      DB_PATH: /data/venue.db
+      # 首次启动是否写入演示数据：1=是，0=否
+      SEED_DEMO: "1"
+    volumes:
+      - venue-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    container_name: venue-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  venue-data:
